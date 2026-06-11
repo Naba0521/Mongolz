@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "The MongolZ-тэй зургаа татуул",
+  title: "The MongolZ — Fan Photo",
   description:
-    "Зургаа оруулаад The MongolZ-ийн тоглогчидтой хамтарсан дурсгалын зураг үүсгэ",
+    "Upload your photo and create a memory shot with The MongolZ players",
   icons: {
     icon: "/icon.png",
     apple: "/icon.png",

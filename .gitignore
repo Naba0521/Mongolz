@@ -39,6 +39,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# temporary share images (QR download links)
+.share-data
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

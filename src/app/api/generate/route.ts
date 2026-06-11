@@ -231,7 +231,7 @@ export async function POST(request: NextRequest) {
   const photoPath = findPlayerPhoto(player.id);
   if (!photoPath) {
     return NextResponse.json(
-      { error: `${player.name}-ийн зураг олдсонгүй. public/players/${player.id}.jpg нэмнэ үү.`, fallback: false },
+      { error: `${player.name}-ийн зураг олдсонгүй. public/players/${player.id}.png нэмнэ үү.`, fallback: false },
       { status: 400 },
     );
   }

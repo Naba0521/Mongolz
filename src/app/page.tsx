@@ -25,13 +25,13 @@ const MODES: { id: Mode; label: string; icon: string; description: string }[] = 
     id: "polaroid",
     label: "Polaroid",
     icon: "🖼",
-    description: "Fan wall — polaroid зургуудын хана",
+    description: "Polaroid-style fan wall collage",
   },
   {
     id: "ai",
-    label: "AI зураг",
+    label: "AI Photo",
     icon: "✨",
-    description: "Нэг тоглогчтой хамт зогсож зургаа татуулсан мэт зураг",
+    description: "Photo that looks like you posed with a player",
   },
 ];
 
@@ -76,6 +76,15 @@ export default function Home() {
     return () => {
       video.pause();
       video.currentTime = 0;
+    };
+  }, [loading, mode]);
+
+  useEffect(() => {
+    if (!(loading && mode === "ai")) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
     };
   }, [loading, mode]);
 
@@ -165,8 +174,11 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ image: result }),
       });
-      const { url } = await res.json();
-      const qr = await QRCode.toDataURL(url, { width: 300, margin: 2 });
+      const data = await res.json();
+      if (!res.ok || !data.url) {
+        throw new Error(data.error ?? "Share failed");
+      }
+      const qr = await QRCode.toDataURL(data.url, { width: 300, margin: 2 });
       setQrDataUrl(qr);
     } catch {
       setError("QR код үүсгэхэд алдаа гарлаа.");
@@ -187,7 +199,7 @@ export default function Home() {
         players.filter((p) => selectedIds.includes(p.id))
       );
 
-      setProgress("Коллаж угсарч байна…");
+      setProgress("Building collage…");
       const { composePolaroid } = await import("@/lib/composePolaroid");
       const dataUrl = await composePolaroid(photoPreview, selected);
 
@@ -195,7 +207,7 @@ export default function Home() {
       setResult(await addLogoHeader(dataUrl));
     } catch (err) {
       console.error(err);
-      setError("Зураг угсрахад алдаа гарлаа. Дахин оролдоно уу.");
+      setError("Failed to build image. Try again.");
     } finally {
       setLoading(false);
       setProgress(null);
@@ -216,7 +228,7 @@ export default function Home() {
     setNotice(null);
 
     try {
-      setProgress("AI зураг үүсгэж байна — 10-30 секунд орчим…");
+      setProgress("Generating AI photo — about 10–30 seconds…");
       const formData = new FormData();
       formData.append("photo", photoFile);
       formData.append("player", player.id);
@@ -239,7 +251,7 @@ export default function Home() {
 
       // --- Local fallback composite ---
       setProgress(
-        "AI горим түр боломжгүй — хамтарсан зургийг локал угсарч байна… (анхны удаад 1-2 минут)"
+        "AI unavailable — building fallback image… (1–2 min first time)"
       );
       const { removeBackground } = await import("@imgly/background-removal");
       const bgConfig = { publicPath: `${window.location.origin}/bg-data/` };
@@ -260,15 +272,15 @@ export default function Home() {
       const bgUrl = bgBlob ? URL.createObjectURL(bgBlob) : null;
 
       try {
-        setProgress("Зураг угсарч байна…");
+        setProgress("Compositing image…");
         const { composeAiPhoto } = await import("@/lib/composeAiPhoto");
         const dataUrl = await composeAiPhoto(fanUrl, playerUrl, bgUrl);
         const { addLogoHeader } = await import("@/lib/logoHeader");
         setResult(await addLogoHeader(dataUrl));
         setNotice(
-          `${data.error ?? "AI горим боломжгүй байна."} Тиймээс ${
-            bgUrl ? "ImagineArt фонтой" : "локал"
-          } хувилбараар угсарлаа.`
+          `${data.error ?? "AI unavailable."} Used the ${
+            bgUrl ? "ImagineArt background" : "basic"
+          } version instead.`
         );
       } finally {
         URL.revokeObjectURL(fanUrl);
@@ -316,7 +328,7 @@ export default function Home() {
 
             <div className="flex flex-col gap-2 lg:min-w-[320px]">
               <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500 lg:text-right">
-                Загвараа сонго
+                Choose a style
               </p>
               <div className="flex gap-1 rounded-xl bg-zinc-900 p-1 ring-1 ring-zinc-800">
                 {MODES.map((m) => (
@@ -352,18 +364,18 @@ export default function Home() {
       {/* Hero */}
       <section className="text-center">
         <h1 className="text-3xl font-bold text-zinc-100 sm:text-4xl">
-          Багтайгаа зургаа <span className="text-amber-400">татуул</span>
+          Take a photo <span className="text-amber-400">with the team</span>
         </h1>
         <p className="mx-auto mt-3 max-w-xl text-zinc-400">
-          Зургаа оруулаад дуртай тоглогчоо сонго — The MongolZ-ийн
-          тоглогчидтой хамтарсан дурсгалын зургаа аваарай.
+          Upload your photo and pick your favorite players — create a memory
+          shot with The MongolZ.
         </p>
       </section>
 
       {/* Step 1: Upload */}
       <section>
         <h2 className="mb-3 text-lg font-semibold">
-          <span className="mr-2 text-amber-400">1.</span>Зургаа оруул
+          <span className="mr-2 text-amber-400">1.</span>Зураг оруулах
         </h2>
         <div
           onClick={() => fileInputRef.current?.click()}
@@ -413,11 +425,11 @@ export default function Home() {
                   onClick={() => fileInputRef.current?.click()}
                   className="flex items-center gap-2 rounded-xl border border-zinc-700 px-5 py-2.5 font-semibold text-zinc-200 hover:border-amber-400"
                 >
-                  🖼 Галереиас сонгох
+                  🖼 From Gallery
                 </button>
               </div>
               <p className="text-sm">
-                Царай тод харагдсан зураг хамгийн сайн · 8MB хүртэл
+                Use a clear photo of your face · up to 8MB
               </p>
             </div>
           )}
@@ -476,8 +488,8 @@ export default function Home() {
               className="text-sm text-amber-400 hover:text-amber-300"
             >
               {selectedIds.length === players.length && players.length > 0
-                ? "Бүгдийг болих"
-                : "Бүх багийг сонгох"}
+                ? "Бүгдийг хасах"
+                : "Бүх тоглогчийг сонгох"}
             </button>
           )}
         </div>
@@ -530,8 +542,7 @@ export default function Home() {
         </div>
         {mode === "ai" && (
           <p className="mt-2 text-sm text-zinc-400">
-            AI горимд нэг тоглогчтой хамт зогсож зургаа татуулсан мэт зураг
-            үүснэ.
+            Creates a photo that looks like you posed together with one player.
           </p>
         )}
       </section>
@@ -562,21 +573,10 @@ export default function Home() {
         )}
       </section>
 
-      {/* Progress */}
-      {loading && (
+      {/* Progress — polaroid spinner */}
+      {loading && mode !== "ai" && (
         <section className="flex flex-col items-center gap-4 rounded-2xl border border-zinc-800 bg-zinc-900/60 p-6 sm:p-10">
-          {mode === "ai" ? (
-            /* eslint-disable-next-line jsx-a11y/media-has-caption */
-            <video
-              ref={loadingVideoRef}
-              src="/loading.mov"
-              loop
-              playsInline
-              className="w-full max-w-md rounded-xl"
-            />
-          ) : (
-            <div className="h-10 w-10 animate-spin rounded-full border-4 border-zinc-700 border-t-amber-400" />
-          )}
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-zinc-700 border-t-amber-400" />
           <p className="text-center text-zinc-400">{progress}</p>
         </section>
       )}
@@ -633,11 +633,10 @@ export default function Home() {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={qrDataUrl} alt="QR code" className="rounded-xl" width={260} height={260} />
                 <p className="text-center text-sm text-zinc-400">
-                  Утасны камераар уншуулахад Instagram, Facebook share
+                  Scan with your phone camera to open the share page for
+                  Instagram and Facebook
                   <br />
-                  хуудас нээгдэнэ
-                  <br />
-                  <span className="text-xs text-zinc-400/70">(30 минутын дотор)</span>
+                  <span className="text-xs text-zinc-400/70">(valid for 30 minutes)</span>
                 </p>
                 <button
                   onClick={() => setQrDataUrl(null)}
@@ -652,9 +651,28 @@ export default function Home() {
       )}
 
       <footer className="mt-auto pt-10 text-center text-xs text-zinc-500">
-        Fan project · The MongolZ-тэй албан ёсны холбоогүй · Оруулсан зургийг хадгалдаггүй
+        Fan project · Not affiliated with The MongolZ · Uploaded photos are not stored
       </footer>
     </main>
+
+      {/* Progress — AI fullscreen video */}
+      {loading && mode === "ai" && (
+        <div className="fixed inset-0 z-100 flex items-center justify-center bg-black px-4 py-8">
+          {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+          <video
+            ref={loadingVideoRef}
+            src="/loading.mov"
+            loop
+            playsInline
+            className="max-h-[88vh] max-w-[92vw] object-contain"
+          />
+          {progress && (
+            <p className="absolute inset-x-0 bottom-8 px-6 text-center text-sm font-medium text-white/90 drop-shadow-lg">
+              {progress}
+            </p>
+          )}
+        </div>
+      )}
     </>
   );
 }

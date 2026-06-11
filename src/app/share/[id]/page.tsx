@@ -22,10 +22,10 @@ export async function generateMetadata({
 
   return {
     title: "The MongolZ",
-    description: "Багтайгаа зургаа татуул",
+    description: "Photo with The MongolZ",
     openGraph: {
       title: "The MongolZ",
-      description: "Багтайгаа зургаа татуул",
+      description: "Photo with The MongolZ",
       url: pageUrl,
       type: "website",
       images: [{ url: imageUrl, width: 1080, height: 1350, alt: "The MongolZ photo" }],

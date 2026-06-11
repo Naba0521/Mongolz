@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   fetchImageBlob,
   isInAppBrowser,
@@ -30,21 +30,31 @@ export default function ShareLanding({ id, pageUrl }: Props) {
     setInApp(isInAppBrowser());
   }, []);
 
-  const preloadBlob = useCallback(async () => {
-    try {
-      const blob = await fetchImageBlob(apiImageUrl);
-      setImageBlob(blob);
-    } catch {
-      setValid(false);
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadShare() {
+      try {
+        const res = await fetch(apiImageUrl);
+        if (!res.ok) {
+          if (!cancelled) setValid(false);
+          return;
+        }
+        const blob = await res.blob();
+        if (!cancelled) {
+          setImageBlob(blob);
+          setValid(true);
+        }
+      } catch {
+        if (!cancelled) setValid(false);
+      }
     }
+
+    void loadShare();
+    return () => {
+      cancelled = true;
+    };
   }, [apiImageUrl]);
-
-  const handleImageLoad = () => {
-    setValid(true);
-    preloadBlob();
-  };
-
-  const handleImageError = () => setValid(false);
 
   const getBlob = async (): Promise<Blob> => {
     if (imageBlob) return imageBlob;
@@ -134,14 +144,6 @@ export default function ShareLanding({ id, pageUrl }: Props) {
   if (valid === null) {
     return (
       <main className="flex min-h-full flex-col items-center justify-center gap-3 bg-zinc-950 p-6">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={apiImageUrl}
-          alt=""
-          className="hidden"
-          onLoad={handleImageLoad}
-          onError={handleImageError}
-        />
         <div className="h-10 w-10 animate-spin rounded-full border-4 border-zinc-700 border-t-amber-400" />
         <p className="text-sm text-zinc-400">Ачаалж байна…</p>
       </main>
@@ -154,7 +156,7 @@ export default function ShareLanding({ id, pageUrl }: Props) {
         <p className="text-4xl">⏱</p>
         <h1 className="text-xl font-bold text-zinc-100">Холбоос хүчингүй болсон</h1>
         <p className="max-w-sm text-sm text-zinc-400">
-          QR код 30 минутын дараа хүчингүй болдог. Шинэ QR код үүсгэнэ үү.
+          QR код 30 минутын дараа хүчингүй болдог. Шинэ QR код үүсгээрэй.
         </p>
       </main>
     );
@@ -182,15 +184,15 @@ export default function ShareLanding({ id, pageUrl }: Props) {
       <div className="flex flex-1 flex-col gap-5 p-4">
         {inApp && (
           <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
-            Instagram/Facebook апп дотор share хийхгүй байвал{" "}
-            <strong>Safari</strong> эсвэл <strong>Chrome</strong>-оор нээнэ үү.
+            If sharing doesn&apos;t work in the Instagram/Facebook app, open in{" "}
+            <strong>Safari</strong> or <strong>Chrome</strong>.
           </div>
         )}
 
         <div className="text-center">
-          <h1 className="text-lg font-bold text-zinc-100">Зураг бэлэн 🎉</h1>
+          <h1 className="text-lg font-bold text-zinc-100">Таны зураг бэлэн 🎉</h1>
           <p className="mt-1 text-sm text-zinc-400">
-            Share товч дарж Instagram эсвэл Facebook сонгоно
+            Tap Share and choose Instagram or Facebook
           </p>
         </div>
 
@@ -211,7 +213,7 @@ export default function ShareLanding({ id, pageUrl }: Props) {
             {sharing === "save"
               ? "Хадгалж байна…"
               : isMobileDevice()
-                ? "📷 Photos-д хадгалах"
+                ? "📷 Save to Photos"
                 : "⬇ Татаж авах"}
           </button>
 
@@ -221,7 +223,7 @@ export default function ShareLanding({ id, pageUrl }: Props) {
             disabled={sharing !== null}
             className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#f09433] via-[#e6683c] to-[#bc1888] px-6 py-4 text-base font-bold text-white shadow-md disabled:opacity-50"
           >
-            {sharing === "ig" ? "Нээж байна…" : "📸 Instagram-д share"}
+            {sharing === "ig" ? "Opening…" : "📸 Share on Instagram"}
           </button>
 
           <button
@@ -230,16 +232,17 @@ export default function ShareLanding({ id, pageUrl }: Props) {
             disabled={sharing !== null}
             className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#1877F2] px-6 py-4 text-base font-bold text-white shadow-md disabled:opacity-50"
           >
-            {sharing === "fb" ? "Нээж байна…" : "👍 Facebook-д share"}
+            {sharing === "fb" ? "Opening…" : "👍 Share on Facebook"}
           </button>
         </div>
 
         {hint === "instagram" && (
           <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4 text-sm text-zinc-200">
-            <p className="font-semibold">Instagram-д share хийх:</p>
+            <p className="font-semibold">Share on Instagram:</p>
             <ol className="mt-2 list-decimal space-y-1 pl-4 text-zinc-400">
-              <li>Дээрх &quot;Photos-д хадгалах&quot; дарна</li>
+              <li>Tap &quot;Save to Photos&quot; above</li>
               <li>
+                Open the{" "}
                 <button
                   type="button"
                   onClick={openInstagramApp}
@@ -247,28 +250,28 @@ export default function ShareLanding({ id, pageUrl }: Props) {
                 >
                   Instagram
                 </button>{" "}
-                апп нээнэ
+                app
               </li>
-              <li>Story эсвэл Post → Gallery-аас зураг сонгоно</li>
+              <li>Story or Post → pick the image from Gallery</li>
             </ol>
           </div>
         )}
 
         {hint === "facebook" && (
           <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4 text-sm text-zinc-200">
-            <p className="font-semibold">Facebook-д share хийх:</p>
+            <p className="font-semibold">Share on Facebook:</p>
             <ol className="mt-2 list-decimal space-y-1 pl-4 text-zinc-400">
-              <li>Эхлээд зураг Photos-д хадгална</li>
-              <li>Facebook апп нээгээд шинэ post үүсгэнэ</li>
-              <li>Gallery-аас зураг сонгоно</li>
+              <li>Save the image to Photos first</li>
+              <li>Open Facebook and create a new post</li>
+              <li>Pick the image from Gallery</li>
             </ol>
           </div>
         )}
 
         <p className="text-center text-xs leading-relaxed text-zinc-500">
-          Photos-д хадгалах: Share цонхноос <strong>Save Image</strong> сонгоно.
+          Save to Photos: choose <strong>Save Image</strong> in the share sheet.
           <br />
-          Instagram/Facebook: Share цонхноос аппаа сонгоно.
+          Instagram / Facebook: pick your app from the share sheet.
         </p>
       </div>
     </main>
