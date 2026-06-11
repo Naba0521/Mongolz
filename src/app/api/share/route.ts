@@ -23,5 +23,6 @@ export async function POST(request: NextRequest) {
 
   // Build absolute URL from the incoming request
   const { origin } = new URL(request.url);
-  return NextResponse.json({ id, url: `${origin}/api/share/${id}` });
+  // Landing page with Instagram / Facebook share buttons
+  return NextResponse.json({ id, url: `${origin}/share/${id}` });
 }

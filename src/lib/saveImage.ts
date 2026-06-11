@@ -2,7 +2,19 @@
 export async function saveImage(dataUrl: string, filename: string): Promise<void> {
   const res = await fetch(dataUrl);
   const blob = await res.blob();
-  const file = new File([blob], filename, { type: "image/png" });
+  await saveBlob(blob, filename);
+}
+
+/** Share or save image fetched from a URL (e.g. /api/share/[id]). */
+export async function shareImageFromUrl(imageUrl: string, filename: string): Promise<void> {
+  const res = await fetch(imageUrl);
+  if (!res.ok) throw new Error("Image not found");
+  const blob = await res.blob();
+  await saveBlob(blob, filename);
+}
+
+async function saveBlob(blob: Blob, filename: string): Promise<void> {
+  const file = new File([blob], filename, { type: blob.type || "image/png" });
 
   if (typeof navigator.share === "function" && navigator.canShare?.({ files: [file] })) {
     await navigator.share({ files: [file] });

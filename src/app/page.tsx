@@ -701,7 +701,9 @@ export default function Home() {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={qrDataUrl} alt="QR code" className="rounded-xl" width={260} height={260} />
                 <p className="text-center text-sm text-pc-text-muted">
-                  Утасны камераар уншуулахад зураг татагдана
+                  Утасны камераар уншуулахад Instagram, Facebook share
+                  <br />
+                  хуудас нээгдэнэ
                   <br />
                   <span className="text-xs text-pc-text-muted/70">(30 минутын дотор)</span>
                 </p>

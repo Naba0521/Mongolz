@@ -16,7 +16,7 @@ export async function GET(
   return new NextResponse(new Uint8Array(entry.data), {
     headers: {
       "Content-Type": entry.mime,
-      "Content-Disposition": `attachment; filename="mongolz.png"`,
+      "Content-Disposition": 'inline; filename="mongolz.png"',
       "Cache-Control": "private, max-age=1800",
     },
   });
