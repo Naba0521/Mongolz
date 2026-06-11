@@ -1,19 +1,40 @@
 @import "tailwindcss";
 
 :root {
-  --background: #09090f;
-  --foreground: #f4f4f5;
+  --background: #f5fbf2;
+  --foreground: #1e3a2f;
+  --pc-green: #6bbf3a;
+  --pc-green-light: #a3e068;
+  --pc-green-dark: #2d8a4e;
+  --pc-purple: #7b4fd4;
+  --pc-teal: #2ec4b6;
+  --pc-cream: #f7faf5;
+  --pc-mint: #e8f5e3;
+  --pc-surface: #ffffff;
+  --pc-border: #cfe8c4;
+  --pc-text-muted: #5a7a62;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-pc-green: var(--pc-green);
+  --color-pc-green-light: var(--pc-green-light);
+  --color-pc-green-dark: var(--pc-green-dark);
+  --color-pc-purple: var(--pc-purple);
+  --color-pc-teal: var(--pc-teal);
+  --color-pc-cream: var(--pc-cream);
+  --color-pc-mint: var(--pc-mint);
+  --color-pc-surface: var(--pc-surface);
+  --color-pc-border: var(--pc-border);
+  --color-pc-text-muted: var(--pc-text-muted);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
 body {
-  background: var(--background);
+  background: linear-gradient(160deg, var(--pc-cream) 0%, var(--pc-mint) 45%, #dff0d8 100%);
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  min-height: 100%;
 }

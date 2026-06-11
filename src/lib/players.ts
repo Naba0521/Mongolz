@@ -12,4 +12,4 @@ export const PLAYERS: Player[] = [
   { id: "cobrazera", name: "Cobrazera", role: "Rifler" },
 ];
 
-export const PHOTO_EXTENSIONS = ["jpg", "jpeg", "png", "webp"] as const;
+export const PHOTO_EXTENSIONS = ["png", "webp", "jpg", "jpeg"] as const;

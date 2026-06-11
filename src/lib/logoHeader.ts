@@ -1,12 +1,10 @@
 import { loadImage } from "./canvasUtils";
+import { PC, roundRect } from "./pineconeBrand";
 
 const LOGO_SRC = "/players/logo.png";
-const GOLD = "#d4af37";
 
 /**
- * Adds a white header band with the academy logo above the image.
- * Returns the original image unchanged if the logo can't be loaded,
- * so generation never fails because of branding.
+ * Adds a branded header band above the image.
  */
 export async function addLogoHeader(dataUrl: string): Promise<string> {
   let logo: HTMLImageElement;
@@ -18,24 +16,42 @@ export async function addLogoHeader(dataUrl: string): Promise<string> {
 
   const img = await loadImage(dataUrl);
   const W = img.width;
-  const bandH = Math.round(W * 0.12);
+  const bandH = Math.round(W * 0.11);
 
   const canvas = document.createElement("canvas");
   canvas.width = W;
   canvas.height = img.height + bandH;
   const ctx = canvas.getContext("2d")!;
 
-  ctx.fillStyle = "#ffffff";
+  const bandGrad = ctx.createLinearGradient(0, 0, 0, bandH);
+  bandGrad.addColorStop(0, PC.white);
+  bandGrad.addColorStop(1, PC.mint);
+  ctx.fillStyle = bandGrad;
   ctx.fillRect(0, 0, W, bandH);
 
-  // Logo centered inside the band
-  const logoH = bandH * 0.58;
+  // Subtle side accents
+  ctx.fillStyle = "rgba(107,191,58,0.08)";
+  ctx.fillRect(0, 0, W * 0.08, bandH);
+  ctx.fillRect(W * 0.92, 0, W * 0.08, bandH);
+
+  const logoH = bandH * 0.55;
   const logoW = (logo.width / logo.height) * logoH;
   ctx.drawImage(logo, (W - logoW) / 2, (bandH - logoH) / 2, logoW, logoH);
 
-  // Thin gold divider between the band and the image
-  ctx.fillStyle = GOLD;
-  ctx.fillRect(0, bandH - Math.max(3, Math.round(W * 0.004)), W, Math.max(3, Math.round(W * 0.004)));
+  const dividerH = Math.max(4, Math.round(W * 0.004));
+  const divGrad = ctx.createLinearGradient(0, 0, W, 0);
+  divGrad.addColorStop(0, PC.greenDark);
+  divGrad.addColorStop(0.5, PC.teal);
+  divGrad.addColorStop(1, PC.purple);
+  ctx.fillStyle = divGrad;
+  ctx.fillRect(0, bandH - dividerH, W, dividerH);
+
+  // Soft shadow under band
+  ctx.save();
+  roundRect(ctx, 0, bandH - 2, W, 8, 0);
+  ctx.fillStyle = "rgba(30,58,47,0.06)";
+  ctx.fillRect(0, bandH, W, 6);
+  ctx.restore();
 
   ctx.drawImage(img, 0, bandH);
 
