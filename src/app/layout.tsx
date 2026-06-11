@@ -13,12 +13,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Pinecone Academy × The MongolZ",
+  title: "The MongolZ-тэй зургаа татуул",
   description:
-    "Pinecone Academy — The MongolZ-ийн тоглогчидтой хамтарсан дурсгалын зураг үүсгэ",
+    "Зургаа оруулаад The MongolZ-ийн тоглогчидтой хамтарсан дурсгалын зураг үүсгэ",
   icons: {
-    icon: "/players/pineconeLogo.png",
-    apple: "/players/pineconeLogo.png",
+    icon: "/icon.png",
+    apple: "/icon.png",
   },
 };
 

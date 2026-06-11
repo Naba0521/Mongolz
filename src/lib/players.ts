@@ -6,9 +6,9 @@ export type Player = {
 
 export const PLAYERS: Player[] = [
   { id: "blitz", name: "bLitz", role: "In-game leader" },
-  { id: "techno", name: "Techno", role: "Rifler" },
-  { id: "mzinho", name: "mzinho", role: "AWPer" },
-  { id: "910", name: "910", role: "Rifler" },
+  { id: "techno", name: "Techno", role: "Entry fragger" },
+  { id: "mzinho", name: "mzinho", role: "Rifler" },
+  { id: "910", name: "910", role: "AWPer" },
   { id: "cobrazera", name: "Cobrazera", role: "Rifler" },
 ];
 

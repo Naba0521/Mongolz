@@ -41,7 +41,7 @@ export async function composePolaroid(
   const ctx = canvas.getContext("2d")!;
 
   drawAcademyBackground(ctx, W, H);
-  drawPosterHeader(ctx, W, "PINECONE ACADEMY · FAN WALL");
+  drawPosterHeader(ctx, W, "FAN WALL");
   drawWallPanel(ctx);
 
   const playerImages = await Promise.all(
@@ -90,24 +90,23 @@ export async function composePolaroid(
 function drawWallPanel(ctx: CanvasRenderingContext2D) {
   const pad = 16;
   ctx.save();
-  ctx.shadowColor = "rgba(30,58,47,0.1)";
+  ctx.shadowColor = "rgba(0,0,0,0.35)";
   ctx.shadowBlur = 20;
   ctx.shadowOffsetY = 4;
   roundRect(ctx, pad, WALL_TOP, W - pad * 2, WALL_BOTTOM - WALL_TOP, 20);
-  ctx.fillStyle = "rgba(255,255,255,0.75)";
+  ctx.fillStyle = "rgba(26,31,40,0.85)";
   ctx.fill();
   ctx.restore();
 
   roundRect(ctx, pad, WALL_TOP, W - pad * 2, WALL_BOTTOM - WALL_TOP, 20);
-  ctx.strokeStyle = "rgba(107,191,58,0.3)";
+  ctx.strokeStyle = "rgba(232,200,74,0.25)";
   ctx.lineWidth = 2;
   ctx.stroke();
 
-  // Subtle cork texture inside wall
   ctx.save();
   roundRect(ctx, pad, WALL_TOP, W - pad * 2, WALL_BOTTOM - WALL_TOP, 20);
   ctx.clip();
-  ctx.fillStyle = "rgba(45,138,78,0.05)";
+  ctx.fillStyle = "rgba(232,200,74,0.04)";
   for (let i = 0; i < 200; i++) {
     ctx.beginPath();
     ctx.arc(
@@ -134,7 +133,7 @@ function drawPolaroid(
   ctx.translate(-w / 2, -h / 2);
 
   ctx.save();
-  ctx.shadowColor = isUser ? "rgba(46,196,182,0.35)" : "rgba(30,58,47,0.22)";
+  ctx.shadowColor = isUser ? "rgba(232,200,74,0.35)" : "rgba(0,0,0,0.35)";
   ctx.shadowBlur = isUser ? 32 : 20;
   ctx.shadowOffsetY = isUser ? 14 : 8;
   ctx.fillStyle = PC.white;
@@ -142,11 +141,7 @@ function drawPolaroid(
   ctx.restore();
 
   if (isUser) {
-    const g = ctx.createLinearGradient(0, 0, w, h);
-    g.addColorStop(0, PC.green);
-    g.addColorStop(0.5, PC.teal);
-    g.addColorStop(1, PC.purple);
-    ctx.strokeStyle = g;
+    ctx.strokeStyle = PC.gold;
     ctx.lineWidth = 5;
     ctx.strokeRect(3, 3, w - 6, h - 6);
   }
@@ -156,7 +151,7 @@ function drawPolaroid(
   if (img) {
     drawCover(ctx, img, margin, margin, w - margin * 2, photoH);
   } else {
-    ctx.fillStyle = PC.mint;
+    ctx.fillStyle = PC.bgElevated;
     ctx.fillRect(margin, margin, w - margin * 2, photoH);
     ctx.fillStyle = PC.textMuted;
     ctx.font = `bold ${w * 0.28}px Arial, sans-serif`;
@@ -166,7 +161,7 @@ function drawPolaroid(
     ctx.textBaseline = "alphabetic";
   }
 
-  ctx.fillStyle = isUser ? PC.greenDark : PC.text;
+  ctx.fillStyle = isUser ? PC.gold : PC.text;
   ctx.font = `${isUser ? 700 : 600} ${w * (isUser ? 0.08 : 0.1)}px ${HAND_FONT}`;
   ctx.textAlign = "center";
   ctx.fillText(caption, w / 2, h - h * 0.05);
@@ -180,7 +175,7 @@ function drawPolaroid(
 function drawPin(ctx: CanvasRenderingContext2D, cx: number, cy: number, isUser: boolean) {
   ctx.beginPath();
   ctx.arc(cx, cy, isUser ? 9 : 7, 0, Math.PI * 2);
-  ctx.fillStyle = isUser ? PC.teal : PC.purple;
+  ctx.fillStyle = isUser ? PC.gold : PC.accent;
   ctx.fill();
   ctx.beginPath();
   ctx.arc(cx - 2, cy - 2, isUser ? 3 : 2.5, 0, Math.PI * 2);
@@ -192,7 +187,7 @@ function drawTape(ctx: CanvasRenderingContext2D, w: number, rotationDeg: number,
   ctx.save();
   ctx.translate(w / 2, 0);
   ctx.rotate((Math.PI / 180) * (rotationDeg > 0 ? -3 : 3));
-  ctx.fillStyle = isUser ? "rgba(46,196,182,0.5)" : "rgba(123,79,212,0.3)";
+  ctx.fillStyle = isUser ? "rgba(232,200,74,0.45)" : "rgba(74,158,255,0.25)";
   ctx.fillRect(-w * 0.16, -14, w * 0.32, 28);
   ctx.restore();
 }

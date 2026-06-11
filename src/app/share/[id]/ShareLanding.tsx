@@ -60,7 +60,7 @@ export default function ShareLanding({ id, pageUrl }: Props) {
       const blob = await getBlob();
       const result = await nativeShareImage(blob, {
         title: "The MongolZ",
-        text: "Pinecone Academy × The MongolZ",
+        text: "The MongolZ",
       });
 
       if (result === "unsupported") {
@@ -83,12 +83,12 @@ export default function ShareLanding({ id, pageUrl }: Props) {
 
       const fileResult = await nativeShareImage(blob, {
         title: "The MongolZ",
-        text: "Pinecone Academy × The MongolZ",
+        text: "The MongolZ",
       });
       if (fileResult === "shared") return;
 
       const urlResult = await nativeShareUrl(pageUrl, {
-        title: "The MongolZ × Pinecone Academy",
+        title: "The MongolZ",
       });
       if (urlResult === "shared") return;
 
@@ -133,7 +133,7 @@ export default function ShareLanding({ id, pageUrl }: Props) {
 
   if (valid === null) {
     return (
-      <main className="flex min-h-full flex-col items-center justify-center gap-3 bg-pc-cream p-6">
+      <main className="flex min-h-full flex-col items-center justify-center gap-3 bg-zinc-950 p-6">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={apiImageUrl}
@@ -142,18 +142,18 @@ export default function ShareLanding({ id, pageUrl }: Props) {
           onLoad={handleImageLoad}
           onError={handleImageError}
         />
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-pc-mint border-t-pc-green" />
-        <p className="text-sm text-pc-text-muted">Ачаалж байна…</p>
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-zinc-700 border-t-amber-400" />
+        <p className="text-sm text-zinc-400">Ачаалж байна…</p>
       </main>
     );
   }
 
   if (!valid) {
     return (
-      <main className="flex min-h-full flex-col items-center justify-center gap-3 bg-pc-cream p-6 text-center">
+      <main className="flex min-h-full flex-col items-center justify-center gap-3 bg-zinc-950 p-6 text-center">
         <p className="text-4xl">⏱</p>
-        <h1 className="text-xl font-bold text-pc-green-dark">Холбоос хүчингүй болсон</h1>
-        <p className="max-w-sm text-sm text-pc-text-muted">
+        <h1 className="text-xl font-bold text-zinc-100">Холбоос хүчингүй болсон</h1>
+        <p className="max-w-sm text-sm text-zinc-400">
           QR код 30 минутын дараа хүчингүй болдог. Шинэ QR код үүсгэнэ үү.
         </p>
       </main>
@@ -161,35 +161,35 @@ export default function ShareLanding({ id, pageUrl }: Props) {
   }
 
   return (
-    <main className="mx-auto flex min-h-full max-w-lg flex-col bg-pc-cream">
-      <div className="h-1 bg-gradient-to-r from-pc-green-dark via-pc-teal to-pc-purple" />
-
-      <header className="flex items-center gap-3 border-b border-pc-border/60 bg-white/90 px-4 py-3">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/players/pineconeLogo.png"
-          alt="Pinecone Academy"
-          className="h-9 object-contain"
-        />
+    <main className="mx-auto flex min-h-full max-w-lg flex-col bg-zinc-950">
+      <header className="flex items-center gap-3 border-b border-zinc-800 bg-zinc-900 px-4 py-3">
+        <div className="flex shrink-0 items-center justify-center rounded-lg bg-white px-2.5 py-1.5">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/players/logo.png"
+            alt="The MongolZ"
+            className="h-8 object-contain"
+          />
+        </div>
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-wider text-pc-purple">
-            Pinecone Academy
+          <p className="text-[10px] font-bold uppercase tracking-wider text-amber-400">
+            The MongolZ
           </p>
-          <p className="text-sm font-bold text-pc-green-dark">× The MongolZ</p>
+          <p className="text-sm font-bold text-zinc-100">Fan Photo</p>
         </div>
       </header>
 
       <div className="flex flex-1 flex-col gap-5 p-4">
         {inApp && (
-          <div className="rounded-xl border border-amber-400/50 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
             Instagram/Facebook апп дотор share хийхгүй байвал{" "}
             <strong>Safari</strong> эсвэл <strong>Chrome</strong>-оор нээнэ үү.
           </div>
         )}
 
         <div className="text-center">
-          <h1 className="text-lg font-bold text-pc-green-dark">Зураг бэлэн 🎉</h1>
-          <p className="mt-1 text-sm text-pc-text-muted">
+          <h1 className="text-lg font-bold text-zinc-100">Зураг бэлэн 🎉</h1>
+          <p className="mt-1 text-sm text-zinc-400">
             Share товч дарж Instagram эсвэл Facebook сонгоно
           </p>
         </div>
@@ -198,7 +198,7 @@ export default function ShareLanding({ id, pageUrl }: Props) {
         <img
           src={apiImageUrl}
           alt="The MongolZ зураг"
-          className="w-full rounded-2xl border border-pc-border object-contain shadow-md"
+          className="w-full rounded-2xl border border-zinc-800 object-contain shadow-md"
         />
 
         <div className="flex flex-col gap-3">
@@ -206,7 +206,7 @@ export default function ShareLanding({ id, pageUrl }: Props) {
             type="button"
             onClick={savePhoto}
             disabled={sharing !== null}
-            className="w-full rounded-2xl bg-pc-green px-6 py-4 text-base font-bold text-white shadow-md hover:bg-pc-green-dark disabled:opacity-50"
+            className="w-full rounded-2xl bg-amber-500 px-6 py-4 text-base font-bold text-zinc-950 shadow-md hover:bg-amber-400 disabled:opacity-50"
           >
             {sharing === "save"
               ? "Хадгалж байна…"
@@ -235,9 +235,9 @@ export default function ShareLanding({ id, pageUrl }: Props) {
         </div>
 
         {hint === "instagram" && (
-          <div className="rounded-xl border border-pc-border bg-white p-4 text-sm text-pc-green-dark">
+          <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4 text-sm text-zinc-200">
             <p className="font-semibold">Instagram-д share хийх:</p>
-            <ol className="mt-2 list-decimal space-y-1 pl-4 text-pc-text-muted">
+            <ol className="mt-2 list-decimal space-y-1 pl-4 text-zinc-400">
               <li>Дээрх &quot;Photos-д хадгалах&quot; дарна</li>
               <li>
                 <button
@@ -255,9 +255,9 @@ export default function ShareLanding({ id, pageUrl }: Props) {
         )}
 
         {hint === "facebook" && (
-          <div className="rounded-xl border border-pc-border bg-white p-4 text-sm text-pc-green-dark">
+          <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4 text-sm text-zinc-200">
             <p className="font-semibold">Facebook-д share хийх:</p>
-            <ol className="mt-2 list-decimal space-y-1 pl-4 text-pc-text-muted">
+            <ol className="mt-2 list-decimal space-y-1 pl-4 text-zinc-400">
               <li>Эхлээд зураг Photos-д хадгална</li>
               <li>Facebook апп нээгээд шинэ post үүсгэнэ</li>
               <li>Gallery-аас зураг сонгоно</li>
@@ -265,7 +265,7 @@ export default function ShareLanding({ id, pageUrl }: Props) {
           </div>
         )}
 
-        <p className="text-center text-xs leading-relaxed text-pc-text-muted">
+        <p className="text-center text-xs leading-relaxed text-zinc-500">
           Photos-д хадгалах: Share цонхноос <strong>Save Image</strong> сонгоно.
           <br />
           Instagram/Facebook: Share цонхноос аппаа сонгоно.

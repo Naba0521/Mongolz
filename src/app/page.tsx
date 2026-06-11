@@ -18,15 +18,9 @@ function playersForCompose(list: PlayerWithPhoto[]) {
   }));
 }
 
-type Mode = "booth" | "polaroid" | "ai";
+type Mode = "polaroid" | "ai";
 
 const MODES: { id: Mode; label: string; icon: string; description: string }[] = [
-  {
-    id: "booth",
-    label: "Photo Booth",
-    icon: "📸",
-    description: "HLTV banner — багийн мөр + шинэ гишүүн",
-  },
   {
     id: "polaroid",
     label: "Polaroid",
@@ -42,12 +36,11 @@ const MODES: { id: Mode; label: string; icon: string; description: string }[] = 
 ];
 
 export default function Home() {
-  const [mode, setMode] = useState<Mode>("booth");
+  const [mode, setMode] = useState<Mode>("polaroid");
   const [players, setPlayers] = useState<PlayerWithPhoto[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
-  const [userName, setUserName] = useState("");
   const [result, setResult] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState<string | null>(null);
@@ -59,6 +52,7 @@ export default function Home() {
   const [cameraOpen, setCameraOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const loadingVideoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
   useEffect(() => {
@@ -70,6 +64,20 @@ export default function Home() {
       })
       .catch(() => setError("Тоглогчдын мэдээлэл ачаалж чадсангүй."));
   }, []);
+
+  useEffect(() => {
+    const video = loadingVideoRef.current;
+    if (!loading || mode !== "ai" || !video) return;
+
+    video.muted = false;
+    video.volume = 1;
+    void video.play();
+
+    return () => {
+      video.pause();
+      video.currentTime = 0;
+    };
+  }, [loading, mode]);
 
   const handleFile = useCallback((file: File | undefined) => {
     if (!file || !file.type.startsWith("image/")) return;
@@ -179,29 +187,9 @@ export default function Home() {
         players.filter((p) => selectedIds.includes(p.id))
       );
 
-      let dataUrl: string;
-      if (mode === "booth") {
-        setProgress(
-          "Зургийн фоныг хасаж байна… (анхны удаад 1-2 минут болж магадгүй)"
-        );
-        const { removeBackground } = await import(
-          "@imgly/background-removal"
-        );
-        // Model assets are served from our own /public to avoid CDN fetch issues
-        const cutoutBlob = await removeBackground(photoFile, {
-          publicPath: `${window.location.origin}/bg-data/`,
-        });
-        const cutoutUrl = URL.createObjectURL(cutoutBlob);
-
-        setProgress("Постер угсарч байна…");
-        const { composeBooth } = await import("@/lib/composeBooth");
-        dataUrl = await composeBooth(cutoutUrl, selected, userName);
-        URL.revokeObjectURL(cutoutUrl);
-      } else {
-        setProgress("Коллаж угсарч байна…");
-        const { composePolaroid } = await import("@/lib/composePolaroid");
-        dataUrl = await composePolaroid(photoPreview, selected);
-      }
+      setProgress("Коллаж угсарч байна…");
+      const { composePolaroid } = await import("@/lib/composePolaroid");
+      const dataUrl = await composePolaroid(photoPreview, selected);
 
       const { addLogoHeader } = await import("@/lib/logoHeader");
       setResult(await addLogoHeader(dataUrl));
@@ -306,64 +294,56 @@ export default function Home() {
   return (
     <>
       {/* Header — mode selector */}
-      <header className="sticky top-0 z-40">
-        <div className="h-1 bg-gradient-to-r from-pc-green-dark via-pc-teal to-pc-purple" />
-        <div className="border-b border-pc-border/70 bg-white/90 shadow-[0_4px_24px_rgba(45,138,78,0.07)] backdrop-blur-lg">
-          <div className="mx-auto max-w-5xl px-4 py-4">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-              {/* Brand */}
-              <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-pc-mint to-pc-green/20 p-2 ring-1 ring-pc-green/20">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src="/players/pineconeLogo.png"
-                    alt="Pinecone Academy"
-                    className="h-full w-full object-contain"
-                  />
-                </div>
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-pc-purple">
-                    Pinecone Academy
-                  </p>
-                  <p className="text-lg font-bold leading-tight text-pc-green-dark">
-                    × The MongolZ
-                  </p>
-                </div>
+      <header className="sticky top-0 z-40 border-b border-zinc-800 bg-zinc-950/95 backdrop-blur-md">
+        <div className="mx-auto max-w-5xl px-4 py-4">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex shrink-0 items-center justify-center rounded-lg bg-white px-2.5 py-1.5">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/players/logo.png"
+                  alt="The MongolZ"
+                  className="h-8 object-contain sm:h-9"
+                />
               </div>
-
-              {/* Mode tabs */}
-              <div className="flex flex-col gap-2 lg:min-w-[420px]">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-pc-text-muted lg:text-right">
-                  Загвараа сонго
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-widest text-amber-400">
+                  The MongolZ
                 </p>
-                <div className="flex gap-1 rounded-2xl bg-pc-mint p-1.5 ring-1 ring-pc-border/60">
-                  {MODES.map((m) => (
-                    <button
-                      key={m.id}
-                      onClick={() => selectMode(m.id)}
-                      className={`flex flex-1 flex-col items-center gap-0.5 rounded-xl px-2 py-2.5 transition-all duration-200 sm:flex-row sm:justify-center sm:gap-2 sm:px-3 ${
-                        mode === m.id
-                          ? "bg-white text-pc-green-dark shadow-md ring-1 ring-pc-green/25"
-                          : "text-pc-text-muted hover:bg-white/50 hover:text-pc-green-dark"
-                      }`}
-                    >
-                      <span className="text-base leading-none">{m.icon}</span>
-                      <span className="text-[11px] font-bold sm:text-sm">{m.label}</span>
-                    </button>
-                  ))}
-                </div>
+                <p className="text-sm font-bold text-zinc-100">Fan Photo Generator</p>
               </div>
             </div>
 
-            {/* Active mode description */}
-            <div className="mt-3 flex items-start gap-2.5 rounded-xl border border-pc-border/60 bg-gradient-to-r from-pc-green/8 via-pc-teal/8 to-pc-purple/8 px-4 py-2.5">
-              <span className="mt-0.5 text-sm leading-none">
-                {MODES.find((m) => m.id === mode)?.icon}
-              </span>
-              <p className="text-sm leading-snug text-pc-green-dark">
-                {MODES.find((m) => m.id === mode)?.description}
+            <div className="flex flex-col gap-2 lg:min-w-[320px]">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500 lg:text-right">
+                Загвараа сонго
               </p>
+              <div className="flex gap-1 rounded-xl bg-zinc-900 p-1 ring-1 ring-zinc-800">
+                {MODES.map((m) => (
+                  <button
+                    key={m.id}
+                    onClick={() => selectMode(m.id)}
+                    className={`flex flex-1 flex-col items-center gap-0.5 rounded-lg px-2 py-2.5 transition-all duration-200 sm:flex-row sm:justify-center sm:gap-2 sm:px-3 ${
+                      mode === m.id
+                        ? "bg-zinc-800 text-amber-400 shadow-sm ring-1 ring-amber-400/30"
+                        : "text-zinc-400 hover:bg-zinc-800/60 hover:text-zinc-200"
+                    }`}
+                  >
+                    <span className="text-base leading-none">{m.icon}</span>
+                    <span className="text-[11px] font-bold sm:text-sm">{m.label}</span>
+                  </button>
+                ))}
+              </div>
             </div>
+          </div>
+
+          <div className="mt-3 flex items-start gap-2.5 rounded-lg border border-zinc-800 bg-zinc-900/80 px-4 py-2.5">
+            <span className="mt-0.5 text-sm leading-none">
+              {MODES.find((m) => m.id === mode)?.icon}
+            </span>
+            <p className="text-sm leading-snug text-zinc-400">
+              {MODES.find((m) => m.id === mode)?.description}
+            </p>
           </div>
         </div>
       </header>
@@ -371,10 +351,10 @@ export default function Home() {
       <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-10 px-4 py-8">
       {/* Hero */}
       <section className="text-center">
-        <h1 className="text-3xl font-bold text-pc-green-dark sm:text-4xl">
-          Багтайгаа зургаа <span className="text-pc-teal">татуул</span>
+        <h1 className="text-3xl font-bold text-zinc-100 sm:text-4xl">
+          Багтайгаа зургаа <span className="text-amber-400">татуул</span>
         </h1>
-        <p className="mx-auto mt-3 max-w-xl text-pc-text-muted">
+        <p className="mx-auto mt-3 max-w-xl text-zinc-400">
           Зургаа оруулаад дуртай тоглогчоо сонго — The MongolZ-ийн
           тоглогчидтой хамтарсан дурсгалын зургаа аваарай.
         </p>
@@ -383,7 +363,7 @@ export default function Home() {
       {/* Step 1: Upload */}
       <section>
         <h2 className="mb-3 text-lg font-semibold">
-          <span className="mr-2 text-pc-green">1.</span>Зургаа оруул
+          <span className="mr-2 text-amber-400">1.</span>Зургаа оруул
         </h2>
         <div
           onClick={() => fileInputRef.current?.click()}
@@ -399,8 +379,8 @@ export default function Home() {
           }}
           className={`flex min-h-48 cursor-pointer items-center justify-center rounded-2xl border-2 border-dashed p-6 transition-colors ${
             dragOver
-              ? "border-pc-green bg-pc-green/10"
-              : "border-pc-border bg-pc-surface/80 hover:border-pc-green/40"
+              ? "border-amber-400 bg-amber-400/10"
+              : "border-zinc-700 bg-zinc-900/60 hover:border-amber-400/40"
           }`}
         >
           {photoPreview ? (
@@ -411,61 +391,37 @@ export default function Home() {
                 alt="Таны зураг"
                 className="max-h-64 rounded-xl object-contain"
               />
-              <p className="text-sm text-pc-text-muted">
+              <p className="text-sm text-zinc-400">
                 Өөр зураг сонгох бол дахин дарна уу
               </p>
             </div>
           ) : (
             <div
-              className="flex flex-col items-center gap-4 text-pc-text-muted"
+              className="flex flex-col items-center gap-4 text-zinc-400"
               onClick={(e) => e.stopPropagation()}
             >
               <p className="text-4xl">📷</p>
-              <p className="font-medium text-pc-green-dark">Зургаа оруулна уу</p>
+              <p className="font-medium text-zinc-200">Зургаа оруулна уу</p>
               <div className="flex gap-3">
                 <button
                   onClick={openCamera}
-                  className="flex items-center gap-2 rounded-xl bg-pc-green px-5 py-2.5 font-semibold text-white hover:bg-pc-green-dark"
+                  className="flex items-center gap-2 rounded-xl bg-amber-500 px-5 py-2.5 font-semibold text-zinc-950 hover:bg-amber-400"
                 >
                   📸 Камераар авах
                 </button>
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="flex items-center gap-2 rounded-xl border border-pc-border px-5 py-2.5 font-semibold text-pc-green-dark hover:border-pc-green"
+                  className="flex items-center gap-2 rounded-xl border border-zinc-700 px-5 py-2.5 font-semibold text-zinc-200 hover:border-amber-400"
                 >
                   🖼 Галереиас сонгох
                 </button>
               </div>
               <p className="text-sm">
-                {mode === "polaroid"
-                  ? "Царай тод харагдсан зураг хамгийн сайн · 8MB хүртэл"
-                  : "Бүтэн биеэр эсвэл цээж зураг тохиромжтой · 8MB хүртэл"}
+                Царай тод харагдсан зураг хамгийн сайн · 8MB хүртэл
               </p>
             </div>
           )}
         </div>
-        {mode === "booth" && (
-          <div className="mt-3">
-            <label
-              htmlFor="user-name"
-              className="mb-1.5 block text-sm font-medium text-pc-green-dark"
-            >
-              Nickname
-            </label>
-            <input
-              id="user-name"
-              type="text"
-              value={userName}
-              onChange={(e) => setUserName(e.target.value)}
-              placeholder="YOU"
-              maxLength={20}
-              className="w-full rounded-xl border border-pc-border bg-white px-4 py-2.5 text-pc-green-dark placeholder:text-pc-text-muted/60 focus:border-pc-green focus:outline-none focus:ring-2 focus:ring-pc-green/20"
-            />
-            <p className="mt-1 text-xs text-pc-text-muted">
-              Хоосон бол &quot;YOU&quot; гэж харагдана
-            </p>
-          </div>
-        )}
         {/* Gallery picker */}
         <input
           ref={fileInputRef}
@@ -476,8 +432,8 @@ export default function Home() {
         />
         {/* Webcam capture modal */}
         {cameraOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-pc-green-dark/40 p-4 backdrop-blur-sm">
-            <div className="flex flex-col items-center gap-4 rounded-2xl border border-pc-border bg-pc-surface p-6 shadow-lg">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+            <div className="flex flex-col items-center gap-4 rounded-2xl border border-zinc-800 bg-zinc-900 p-6 shadow-lg">
               <h3 className="text-lg font-bold">📸 Зураг авах</h3>
               {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
               <video
@@ -491,13 +447,13 @@ export default function Home() {
               <div className="flex gap-3">
                 <button
                   onClick={capturePhoto}
-                  className="rounded-xl bg-pc-green px-8 py-3 text-lg font-bold text-white hover:bg-pc-green-dark"
+                  className="rounded-xl bg-amber-500 px-8 py-3 text-lg font-bold text-zinc-950 hover:bg-amber-400"
                 >
                   📷 Авах
                 </button>
                 <button
                   onClick={closeCamera}
-                  className="rounded-xl border border-pc-border px-6 py-3 font-semibold text-pc-text-muted hover:border-pc-green"
+                  className="rounded-xl border border-zinc-700 px-6 py-3 font-semibold text-zinc-400 hover:border-amber-400"
                 >
                   Болих
                 </button>
@@ -511,13 +467,13 @@ export default function Home() {
       <section>
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-lg font-semibold">
-            <span className="mr-2 text-pc-green">2.</span>
+            <span className="mr-2 text-amber-400">2.</span>
             {mode === "ai" ? "Нэг тоглогчоо сонго" : "Тоглогчдоо сонго"}
           </h2>
           {mode !== "ai" && (
             <button
               onClick={selectAll}
-              className="text-sm text-pc-green hover:text-pc-green-dark"
+              className="text-sm text-amber-400 hover:text-amber-300"
             >
               {selectedIds.length === players.length && players.length > 0
                 ? "Бүгдийг болих"
@@ -536,11 +492,11 @@ export default function Home() {
                 disabled={disabled}
                 className={`group relative overflow-hidden rounded-2xl border-2 text-left transition-all ${
                   selected
-                    ? "border-pc-green bg-pc-green/10 shadow-sm"
-                    : "border-pc-border bg-pc-surface/80 hover:border-pc-green/40"
+                    ? "border-amber-400 bg-amber-400/10 shadow-sm"
+                    : "border-zinc-800 bg-zinc-900/80 hover:border-amber-400/40"
                 } ${disabled ? "cursor-not-allowed opacity-40" : ""}`}
               >
-                <div className="aspect-square w-full overflow-hidden bg-pc-mint">
+                <div className="aspect-square w-full overflow-hidden bg-zinc-800">
                   {player.photoUrl ? (
                     /* eslint-disable-next-line @next/next/no-img-element */
                     <img
@@ -549,8 +505,8 @@ export default function Home() {
                       className="h-full w-full object-cover transition-transform group-hover:scale-105"
                     />
                   ) : (
-                    <div className="flex h-full w-full flex-col items-center justify-center gap-1 text-pc-text-muted">
-                      <span className="text-3xl font-bold text-pc-green/40">
+                    <div className="flex h-full w-full flex-col items-center justify-center gap-1 text-zinc-400">
+                      <span className="text-3xl font-bold text-amber-400/40">
                         {player.name[0].toUpperCase()}
                       </span>
                       <span className="px-2 text-center text-[10px] leading-tight">
@@ -561,10 +517,10 @@ export default function Home() {
                 </div>
                 <div className="p-2.5">
                   <p className="font-semibold">{player.name}</p>
-                  <p className="text-xs text-pc-text-muted">{player.role}</p>
+                  <p className="text-xs text-zinc-400">{player.role}</p>
                 </div>
                 {selected && (
-                  <span className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-pc-green text-sm font-bold text-white">
+                  <span className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-amber-500 text-sm font-bold text-zinc-950">
                     ✓
                   </span>
                 )}
@@ -573,7 +529,7 @@ export default function Home() {
           })}
         </div>
         {mode === "ai" && (
-          <p className="mt-2 text-sm text-pc-text-muted">
+          <p className="mt-2 text-sm text-zinc-400">
             AI горимд нэг тоглогчтой хамт зогсож зургаа татуулсан мэт зураг
             үүснэ.
           </p>
@@ -585,15 +541,15 @@ export default function Home() {
         <button
           onClick={generate}
           disabled={!canGenerate}
-          className="w-full max-w-sm rounded-2xl bg-pc-green px-8 py-4 text-lg font-bold text-white transition-all hover:bg-pc-green-dark disabled:cursor-not-allowed disabled:opacity-40"
+          className="w-full max-w-sm rounded-2xl bg-amber-500 px-8 py-4 text-lg font-bold text-zinc-950 transition-all hover:bg-amber-400 disabled:cursor-not-allowed disabled:opacity-40"
         >
           {loading ? "Түр хүлээнэ үү…" : "Зураг үүсгэх ✨"}
         </button>
         {!photoFile && (
-          <p className="text-sm text-pc-text-muted">Эхлээд зургаа оруулна уу</p>
+          <p className="text-sm text-zinc-400">Эхлээд зургаа оруулна уу</p>
         )}
         {photoFile && selectedIds.length === 0 && (
-          <p className="text-sm text-pc-text-muted">
+          <p className="text-sm text-zinc-400">
             {mode === "ai"
               ? "Нэг тоглогч сонгоно уу"
               : "Дор хаяж нэг тоглогч сонгоно уу"}
@@ -608,9 +564,20 @@ export default function Home() {
 
       {/* Progress */}
       {loading && (
-        <section className="flex flex-col items-center gap-3 rounded-2xl border border-pc-border bg-pc-surface/80 p-10">
-          <div className="h-10 w-10 animate-spin rounded-full border-4 border-pc-mint border-t-pc-green" />
-          <p className="text-center text-pc-text-muted">{progress}</p>
+        <section className="flex flex-col items-center gap-4 rounded-2xl border border-zinc-800 bg-zinc-900/60 p-6 sm:p-10">
+          {mode === "ai" ? (
+            /* eslint-disable-next-line jsx-a11y/media-has-caption */
+            <video
+              ref={loadingVideoRef}
+              src="/loading.mov"
+              loop
+              playsInline
+              className="w-full max-w-md rounded-xl"
+            />
+          ) : (
+            <div className="h-10 w-10 animate-spin rounded-full border-4 border-zinc-700 border-t-amber-400" />
+          )}
+          <p className="text-center text-zinc-400">{progress}</p>
         </section>
       )}
 
@@ -619,7 +586,7 @@ export default function Home() {
         <section className="flex flex-col items-center gap-4">
           <h2 className="text-lg font-semibold">Таны зураг бэлэн боллоо 🎉</h2>
           {notice && (
-            <p className="max-w-lg rounded-xl border border-pc-teal/40 bg-pc-teal/10 px-4 py-3 text-center text-sm text-pc-green-dark">
+            <p className="max-w-lg rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-center text-sm text-amber-200">
               {notice}
             </p>
           )}
@@ -627,26 +594,26 @@ export default function Home() {
           <img
             src={result}
             alt="Үүссэн зураг"
-            className="max-h-144 rounded-2xl border border-pc-border object-contain shadow-md"
+            className="max-h-144 rounded-2xl border border-zinc-800 object-contain shadow-md"
           />
           <div className="flex flex-wrap justify-center gap-3">
             <a
               href={result}
               download={`mongolz-${mode}.png`}
-              className="rounded-xl bg-pc-green px-6 py-3 font-semibold text-white hover:bg-pc-green-dark"
+              className="rounded-xl bg-amber-500 px-6 py-3 font-semibold text-zinc-950 hover:bg-amber-400"
             >
               ⬇ Татаж авах
             </a>
             <button
               onClick={showQr}
               disabled={qrLoading}
-              className="rounded-xl border border-pc-purple/50 px-6 py-3 font-semibold text-pc-purple hover:border-pc-purple disabled:opacity-50"
+              className="rounded-xl border border-zinc-600 px-6 py-3 font-semibold text-zinc-300 hover:border-amber-400 disabled:opacity-50"
             >
               {qrLoading ? "Үүсгэж байна…" : "📱 QR кодоор татах"}
             </button>
             <button
               onClick={() => { setResult(null); setQrDataUrl(null); generate(); }}
-              className="rounded-xl border border-pc-border px-6 py-3 font-semibold text-pc-text-muted hover:border-pc-green"
+              className="rounded-xl border border-zinc-700 px-6 py-3 font-semibold text-zinc-400 hover:border-amber-400"
             >
               Дахин үүсгэх
             </button>
@@ -655,26 +622,26 @@ export default function Home() {
           {/* QR code modal */}
           {qrDataUrl && (
             <div
-              className="fixed inset-0 z-50 flex items-center justify-center bg-pc-green-dark/40 p-4 backdrop-blur-sm"
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
               onClick={() => setQrDataUrl(null)}
             >
               <div
-                className="flex flex-col items-center gap-4 rounded-2xl border border-pc-border bg-pc-surface p-8 shadow-xl"
+                className="flex flex-col items-center gap-4 rounded-2xl border border-zinc-800 bg-zinc-900 p-8 shadow-xl"
                 onClick={(e) => e.stopPropagation()}
               >
                 <h3 className="text-lg font-bold">📱 QR кодоо уншуулна уу</h3>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={qrDataUrl} alt="QR code" className="rounded-xl" width={260} height={260} />
-                <p className="text-center text-sm text-pc-text-muted">
+                <p className="text-center text-sm text-zinc-400">
                   Утасны камераар уншуулахад Instagram, Facebook share
                   <br />
                   хуудас нээгдэнэ
                   <br />
-                  <span className="text-xs text-pc-text-muted/70">(30 минутын дотор)</span>
+                  <span className="text-xs text-zinc-400/70">(30 минутын дотор)</span>
                 </p>
                 <button
                   onClick={() => setQrDataUrl(null)}
-                  className="rounded-xl border border-pc-border px-6 py-2 text-sm text-pc-text-muted hover:border-pc-green"
+                  className="rounded-xl border border-zinc-700 px-6 py-2 text-sm text-zinc-400 hover:border-amber-400"
                 >
                   Хаах
                 </button>
@@ -684,9 +651,8 @@ export default function Home() {
         </section>
       )}
 
-      <footer className="mt-auto pt-10 text-center text-xs text-pc-text-muted">
-        Pinecone Academy · Fan project · The MongolZ-тэй албан ёсны холбоогүй · Оруулсан зургийг
-        хадгалдаггүй
+      <footer className="mt-auto pt-10 text-center text-xs text-zinc-500">
+        Fan project · The MongolZ-тэй албан ёсны холбоогүй · Оруулсан зургийг хадгалдаггүй
       </footer>
     </main>
     </>

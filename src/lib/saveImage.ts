@@ -64,7 +64,7 @@ export async function nativeShareUrl(
 
   const payload: ShareData = {
     url,
-    title: opts?.title ?? "The MongolZ × Pinecone Academy",
+    title: opts?.title ?? "The MongolZ",
     text: opts?.text ?? "Багтайгаа зургаа татуул",
   };
 

@@ -21,10 +21,10 @@ export async function generateMetadata({
   const imageUrl = `${origin}/api/share/${id}`;
 
   return {
-    title: "The MongolZ × Pinecone Academy",
+    title: "The MongolZ",
     description: "Багтайгаа зургаа татуул",
     openGraph: {
-      title: "The MongolZ × Pinecone Academy",
+      title: "The MongolZ",
       description: "Багтайгаа зургаа татуул",
       url: pageUrl,
       type: "website",
