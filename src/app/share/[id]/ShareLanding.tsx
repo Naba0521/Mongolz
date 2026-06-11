@@ -1,54 +1,127 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { canShareImage, shareImageFromUrl } from "@/lib/saveImage";
+import { useCallback, useEffect, useState } from "react";
+import {
+  fetchImageBlob,
+  isInAppBrowser,
+  isMobileDevice,
+  nativeShareImage,
+  nativeShareUrl,
+  openFacebookSharer,
+  openInstagramApp,
+} from "@/lib/saveImage";
 
 type Props = {
   id: string;
   pageUrl: string;
 };
 
+type Hint = "instagram" | "facebook" | null;
+
 export default function ShareLanding({ id, pageUrl }: Props) {
-  const imageUrl = `/api/share/${id}`;
+  const apiImageUrl = `/api/share/${id}`;
   const [valid, setValid] = useState<boolean | null>(null);
   const [sharing, setSharing] = useState<"ig" | "fb" | "save" | null>(null);
-  const [shareSupported, setShareSupported] = useState(false);
+  const [imageBlob, setImageBlob] = useState<Blob | null>(null);
+  const [hint, setHint] = useState<Hint>(null);
+  const [inApp, setInApp] = useState(false);
 
   useEffect(() => {
-    setShareSupported(canShareImage());
+    setInApp(isInAppBrowser());
   }, []);
 
+  const preloadBlob = useCallback(async () => {
+    try {
+      const blob = await fetchImageBlob(apiImageUrl);
+      setImageBlob(blob);
+    } catch {
+      setValid(false);
+    }
+  }, [apiImageUrl]);
+
+  const handleImageLoad = () => {
+    setValid(true);
+    preloadBlob();
+  };
+
   const handleImageError = () => setValid(false);
-  const handleImageLoad = () => setValid(true);
+
+  const getBlob = async (): Promise<Blob> => {
+    if (imageBlob) return imageBlob;
+    const blob = await fetchImageBlob(apiImageUrl);
+    setImageBlob(blob);
+    return blob;
+  };
 
   const shareInstagram = async () => {
     setSharing("ig");
+    setHint(null);
     try {
-      await shareImageFromUrl(imageUrl, "mongolz.png");
+      const blob = await getBlob();
+      const result = await nativeShareImage(blob, {
+        title: "The MongolZ",
+        text: "Pinecone Academy × The MongolZ",
+      });
+
+      if (result === "unsupported") {
+        setHint("instagram");
+      }
     } catch (err) {
       if ((err as Error).name !== "AbortError") {
-        alert(
-          shareSupported
-            ? "Share хийхэд алдаа гарлаа."
-            : "Instagram-д share хийхийн тулд эхлээд зураг хадгалаад Instagram апп нээнэ үү."
-        );
+        setHint("instagram");
       }
     } finally {
       setSharing(null);
     }
   };
 
-  const shareFacebook = () => {
+  const shareFacebook = async () => {
     setSharing("fb");
-    const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(pageUrl)}`;
-    window.open(fbUrl, "_blank", "noopener,noreferrer");
-    setTimeout(() => setSharing(null), 500);
+    setHint(null);
+    try {
+      const blob = await getBlob();
+
+      const fileResult = await nativeShareImage(blob, {
+        title: "The MongolZ",
+        text: "Pinecone Academy × The MongolZ",
+      });
+      if (fileResult === "shared") return;
+
+      const urlResult = await nativeShareUrl(pageUrl, {
+        title: "The MongolZ × Pinecone Academy",
+      });
+      if (urlResult === "shared") return;
+
+      if (pageUrl.startsWith("http")) {
+        openFacebookSharer(pageUrl);
+        return;
+      }
+
+      setHint("facebook");
+    } catch (err) {
+      if ((err as Error).name !== "AbortError") {
+        setHint("facebook");
+      }
+    } finally {
+      setSharing(null);
+    }
   };
 
   const savePhoto = async () => {
     setSharing("save");
     try {
-      await shareImageFromUrl(imageUrl, "mongolz.png");
+      const blob = await getBlob();
+      const result = await nativeShareImage(blob);
+      if (result === "unsupported") {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "mongolz.png";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      }
     } catch (err) {
       if ((err as Error).name !== "AbortError") {
         alert("Зураг хадгалахад алдаа гарлаа.");
@@ -63,7 +136,7 @@ export default function ShareLanding({ id, pageUrl }: Props) {
       <main className="flex min-h-full flex-col items-center justify-center gap-3 bg-pc-cream p-6">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={imageUrl}
+          src={apiImageUrl}
           alt=""
           className="hidden"
           onLoad={handleImageLoad}
@@ -107,19 +180,41 @@ export default function ShareLanding({ id, pageUrl }: Props) {
       </header>
 
       <div className="flex flex-1 flex-col gap-5 p-4">
+        {inApp && (
+          <div className="rounded-xl border border-amber-400/50 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            Instagram/Facebook апп дотор share хийхгүй байвал{" "}
+            <strong>Safari</strong> эсвэл <strong>Chrome</strong>-оор нээнэ үү.
+          </div>
+        )}
+
         <div className="text-center">
           <h1 className="text-lg font-bold text-pc-green-dark">Зураг бэлэн 🎉</h1>
-          <p className="mt-1 text-sm text-pc-text-muted">Share хийж хадгална уу</p>
+          <p className="mt-1 text-sm text-pc-text-muted">
+            Share товч дарж Instagram эсвэл Facebook сонгоно
+          </p>
         </div>
 
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={imageUrl}
+          src={apiImageUrl}
           alt="The MongolZ зураг"
           className="w-full rounded-2xl border border-pc-border object-contain shadow-md"
         />
 
         <div className="flex flex-col gap-3">
+          <button
+            type="button"
+            onClick={savePhoto}
+            disabled={sharing !== null}
+            className="w-full rounded-2xl bg-pc-green px-6 py-4 text-base font-bold text-white shadow-md hover:bg-pc-green-dark disabled:opacity-50"
+          >
+            {sharing === "save"
+              ? "Хадгалж байна…"
+              : isMobileDevice()
+                ? "📷 Photos-д хадгалах"
+                : "⬇ Татаж авах"}
+          </button>
+
           <button
             type="button"
             onClick={shareInstagram}
@@ -137,25 +232,43 @@ export default function ShareLanding({ id, pageUrl }: Props) {
           >
             {sharing === "fb" ? "Нээж байна…" : "👍 Facebook-д share"}
           </button>
-
-          <button
-            type="button"
-            onClick={savePhoto}
-            disabled={sharing !== null}
-            className="w-full rounded-2xl border-2 border-pc-green bg-white px-6 py-3.5 text-base font-semibold text-pc-green-dark disabled:opacity-50"
-          >
-            {sharing === "save"
-              ? "Хадгалж байна…"
-              : shareSupported
-                ? "📷 Photos-д хадгалах"
-                : "⬇ Татаж авах"}
-          </button>
         </div>
 
+        {hint === "instagram" && (
+          <div className="rounded-xl border border-pc-border bg-white p-4 text-sm text-pc-green-dark">
+            <p className="font-semibold">Instagram-д share хийх:</p>
+            <ol className="mt-2 list-decimal space-y-1 pl-4 text-pc-text-muted">
+              <li>Дээрх &quot;Photos-д хадгалах&quot; дарна</li>
+              <li>
+                <button
+                  type="button"
+                  onClick={openInstagramApp}
+                  className="font-semibold text-[#bc1888] underline"
+                >
+                  Instagram
+                </button>{" "}
+                апп нээнэ
+              </li>
+              <li>Story эсвэл Post → Gallery-аас зураг сонгоно</li>
+            </ol>
+          </div>
+        )}
+
+        {hint === "facebook" && (
+          <div className="rounded-xl border border-pc-border bg-white p-4 text-sm text-pc-green-dark">
+            <p className="font-semibold">Facebook-д share хийх:</p>
+            <ol className="mt-2 list-decimal space-y-1 pl-4 text-pc-text-muted">
+              <li>Эхлээд зураг Photos-д хадгална</li>
+              <li>Facebook апп нээгээд шинэ post үүсгэнэ</li>
+              <li>Gallery-аас зураг сонгоно</li>
+            </ol>
+          </div>
+        )}
+
         <p className="text-center text-xs leading-relaxed text-pc-text-muted">
-          Instagram: Share цонхноос <strong>Instagram</strong> сонгоно.
+          Photos-д хадгалах: Share цонхноос <strong>Save Image</strong> сонгоно.
           <br />
-          Facebook: холбоос share хийнэ — зураг preview-тэй харагдана.
+          Instagram/Facebook: Share цонхноос аппаа сонгоно.
         </p>
       </div>
     </main>

@@ -57,8 +57,6 @@ export default function Home() {
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [qrLoading, setQrLoading] = useState(false);
   const [cameraOpen, setCameraOpen] = useState(false);
-  const [shareSupported, setShareSupported] = useState(false);
-  const [saving, setSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -71,12 +69,6 @@ export default function Home() {
         setSelectedIds(data.players.map((p: PlayerWithPhoto) => p.id));
       })
       .catch(() => setError("Тоглогчдын мэдээлэл ачаалж чадсангүй."));
-  }, []);
-
-  useEffect(() => {
-    import("@/lib/saveImage").then(({ canShareImage }) => {
-      setShareSupported(canShareImage());
-    });
   }, []);
 
   const handleFile = useCallback((file: File | undefined) => {
@@ -153,22 +145,6 @@ export default function Home() {
       handleFile(file);
       closeCamera();
     }, "image/jpeg", 0.92);
-  };
-
-  const handleSave = async () => {
-    if (!result || saving) return;
-    setSaving(true);
-    setError(null);
-    try {
-      const { saveImage } = await import("@/lib/saveImage");
-      await saveImage(result, `mongolz-${mode}.png`);
-    } catch (err) {
-      if ((err as Error).name !== "AbortError") {
-        setError("Зураг хадгалахад алдаа гарлаа.");
-      }
-    } finally {
-      setSaving(false);
-    }
   };
 
   const showQr = async () => {
@@ -654,18 +630,13 @@ export default function Home() {
             className="max-h-144 rounded-2xl border border-pc-border object-contain shadow-md"
           />
           <div className="flex flex-wrap justify-center gap-3">
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={saving}
-              className="rounded-xl bg-pc-green px-6 py-3 font-semibold text-white hover:bg-pc-green-dark disabled:opacity-50"
+            <a
+              href={result}
+              download={`mongolz-${mode}.png`}
+              className="rounded-xl bg-pc-green px-6 py-3 font-semibold text-white hover:bg-pc-green-dark"
             >
-              {saving
-                ? "Хадгалж байна…"
-                : shareSupported
-                  ? "📷 Photos-д хадгалах"
-                  : "⬇ Татаж авах"}
-            </button>
+              ⬇ Татаж авах
+            </a>
             <button
               onClick={showQr}
               disabled={qrLoading}
@@ -680,12 +651,6 @@ export default function Home() {
               Дахин үүсгэх
             </button>
           </div>
-          {shareSupported && (
-            <p className="max-w-sm text-center text-xs text-pc-text-muted">
-              Share цонх гарвал <strong>Save Image</strong> дарна уу — Photos-д
-              хадгалагдана
-            </p>
-          )}
 
           {/* QR code modal */}
           {qrDataUrl && (
