@@ -13,7 +13,7 @@ export async function GET(
     return NextResponse.json({ error: "Not found or expired" }, { status: 404 });
   }
 
-  return new NextResponse(entry.data, {
+  return new NextResponse(new Uint8Array(entry.data), {
     headers: {
       "Content-Type": entry.mime,
       "Content-Disposition": `attachment; filename="mongolz.png"`,
